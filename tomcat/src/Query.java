@@ -52,7 +52,7 @@ public class Query extends HttpServlet {
 
         JSONObject jsonObject = new JSONObject();
 
-        final String serverIP = "localhost";
+        final String serverIP = "192.168.0.235";
 
         final int port = 20000;
 

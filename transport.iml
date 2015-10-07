@@ -19,6 +19,7 @@
         <jarDirectory url="file://$MODULE_DIR$/lib" recursive="false" />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="storm-core-0.11.0-SNAPSHOT" level="project" />
   </component>
 </module>
 

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="storm-core-0.11.0-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/storm-core-0.11.0-SNAPSHOT.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/storm-core-0.11.0-SNAPSHOT.jar!/org/apache/storm" />
+    </SOURCES>
+  </library>
+</component>

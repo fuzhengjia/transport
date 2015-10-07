@@ -1,0 +1,77 @@
+package edu.illinois.adsc.transport.topology;
+
+import backtype.storm.task.OutputCollector;
+import backtype.storm.task.TopologyContext;
+import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.topology.base.BaseRichBolt;
+import backtype.storm.tuple.Fields;
+import backtype.storm.tuple.Tuple;
+import edu.illinois.adsc.transport.ErrorCode;
+import edu.illinois.adsc.transport.generated.Query;
+import org.apache.thrift.TDeserializer;
+import org.apache.thrift.TException;
+import backtype.storm.tuple.Values;
+
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Created by robert on 10/6/15.
+ */
+public class QueryBolt extends BaseRichBolt {
+
+    private OutputCollector outputCollector;
+
+    private TDeserializer deserializer;
+
+    @Override
+    public void prepare(Map map, TopologyContext topologyContext, OutputCollector boltOutputCollector) {
+        outputCollector = boltOutputCollector;
+        deserializer = new TDeserializer();
+    }
+
+    @Override
+    public void execute(Tuple tuple) {
+        long queryId = tuple.getLong(0);
+        Query query = new Query();
+        long result;
+        try{
+            deserializer.deserialize(query,tuple.getBinary(1));
+
+        Pattern p = Pattern.compile( ",([0-9]+):([0-9]+)" );
+        Matcher m = p.matcher(query.getTimeStamp());
+        if(!m.find()){
+            System.err.println("failed to parse the input");
+            System.err.format("name:%s, timeStamp:%s\n",query.getStationId(),query.getStationId());
+            result = ErrorCode.InvalidateInput;
+        }
+        else{
+            String hour = m.group(1);
+            String min = m.group(2);
+
+            result = predicate(Integer.parseInt(query.getStationId()),Integer.parseInt(hour), Integer.parseInt(min));
+        }
+
+        outputCollector.emit(new Values(query.query_id, result));
+
+        }
+        catch (TException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+        outputFieldsDeclarer.declare(new Fields("id","result"));
+    }
+
+    private long predicate(int bias, int hour, int min) {
+        final long base = 100 + bias;
+        final long peak = 1000;
+        final long peakTime = 1800;
+        return (long)((1-Math.abs(hour*min-peakTime)/(double)peakTime) * peak + base);
+
+    }
+
+}
