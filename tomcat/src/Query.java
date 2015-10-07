@@ -72,7 +72,6 @@ public class Query extends HttpServlet {
         }
         catch (TTransportException e) {
             out.println("Failed to connect to the QueryResponseServer. Please make sure the server is started and the port and address are "+serverIP+":"+port);
-            return;
         }
         catch (TException e) {
             transport.close();
