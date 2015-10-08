@@ -128,7 +128,7 @@ public class DRPCQueryResponser implements QueryService.Iface{
             queryResults.get(queryId).sema.release();
         }
         else{
-            System.out.format("Query [%d] is timeout!\n",queryId);
+            System.out.format("Query [%d] is timeout!\n", queryId);
         }
     }
 
@@ -144,8 +144,10 @@ public class DRPCQueryResponser implements QueryService.Iface{
         final String stationId = "34";
         final String time = "2015-4-10,14:33:23";
         final String ip = "192.168.0.235";
-        final int port = 20000;
+        final int port = 20000; 
+
         TTransport transport = new TSocket(ip, port);
+
         try{
             transport.open();
 
@@ -153,7 +155,13 @@ public class DRPCQueryResponser implements QueryService.Iface{
 
             QueryService.Client client = new QueryService.Client(protocol);
 
-            System.out.format("Station[%s]:\t %s\n", stationId, client.getNumberOfPeople(stationId,time));
+            long startTime = System.currentTimeMillis();
+
+            long result = client.getNumberOfPeople(stationId, time);
+
+
+            System.out.format("Station[%s]:\t %s\n", stationId, result);
+            System.out.format("Delay: %5.5fms\n", (System.currentTimeMillis()-startTime)/(double)1000);
         }
         catch (TException e) {
             e.printStackTrace();

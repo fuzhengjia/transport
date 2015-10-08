@@ -45,6 +45,15 @@
         <servlet-name>errorcode</servlet-name>
         <url-pattern>/errorcode</url-pattern>
     </servlet-mapping>
+
+    <servlet>
+        <servlet-name>multiplequery</servlet-name>
+        <servlet-class>MultipleQuery</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>multiplequery</servlet-name>
+        <url-pattern>/multiplequery</url-pattern>
+    </servlet-mapping>
 	 
 	 
 </web-app>
