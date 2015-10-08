@@ -42,7 +42,7 @@ public class DispatchSpout extends BaseRichSpout {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("id","query"));
+        outputFieldsDeclarer.declare(new Fields("id","query","location"));
     }
 
     @Override
@@ -57,7 +57,7 @@ public class DispatchSpout extends BaseRichSpout {
         try {
             Query query = thriftClient.takeQuery();
             if(query.getQuery_id()>=0)
-                outputCollector.emit(new Values(query.query_id,serializer.serialize(query)));
+                outputCollector.emit(new Values(query.query_id, serializer.serialize(query), query.stationId));
             else{
                 System.err.println("illegal query received!");
                 Thread.sleep(100);

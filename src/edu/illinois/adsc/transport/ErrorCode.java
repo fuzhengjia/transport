@@ -21,10 +21,10 @@ public class ErrorCode {
         errorCodeReason.put(-3L,"Query Timeout");
     }
 
-    public static long Interrupted = 1;
+    public static long Interrupted = -1;
 
-    public static long InvalidateInput = 2;
+    public static long InvalidateInput = -2;
 
-    public static long Timeout = 3;
+    public static long Timeout = -3;
 
 }
