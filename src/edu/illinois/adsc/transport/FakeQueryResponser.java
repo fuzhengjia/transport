@@ -1,8 +1,6 @@
 package edu.illinois.adsc.transport;
 
-import edu.illinois.adsc.transport.generated.Query;
-import edu.illinois.adsc.transport.generated.QueryResult;
-import edu.illinois.adsc.transport.generated.QueryService;
+import edu.illinois.adsc.transport.generated.*;
 import org.apache.thrift.TException;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
@@ -10,6 +8,8 @@ import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,6 +57,29 @@ public class FakeQueryResponser implements QueryService.Iface {
 
     @Override
     public void finishQuery(QueryResult result) throws TException {
+
+    }
+
+    @Override
+    public StationUpdate fetchStateUpdate() throws TException {
+        StationUpdate ret = new StationUpdate();
+        ret.stationId = "33";
+        ret.updateMatrix = new Matrix();
+        ret.updateMatrix.rows = 2;
+        ret.updateMatrix.columns = 2;
+        List<List<Double>> matrix = new Vector<List<Double>>();
+        matrix.add(new Vector<Double>());
+        matrix.add(new Vector<Double>());
+        matrix.get(0).add(0.);
+        matrix.get(0).add(1.0);
+        matrix.get(1).add(2.);
+        matrix.get(1).add(3.0);
+        ret.updateMatrix.data=matrix;
+        return ret;
+    }
+
+    @Override
+    public void pushUpdate(StationUpdate update) throws TException {
 
     }
 

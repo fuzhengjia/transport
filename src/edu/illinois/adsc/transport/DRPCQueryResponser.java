@@ -2,9 +2,7 @@ package edu.illinois.adsc.transport;
 
 import backtype.storm.utils.DRPCClient;
 import backtype.storm.utils.Utils;
-import edu.illinois.adsc.transport.generated.Query;
-import edu.illinois.adsc.transport.generated.QueryResult;
-import edu.illinois.adsc.transport.generated.QueryService;
+import edu.illinois.adsc.transport.generated.*;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -38,9 +36,13 @@ public class DRPCQueryResponser implements QueryService.Iface{
 
     private BlockingQueue<Query> pendingQueries = new LinkedBlockingQueue<Query>();
 
-    private
+    private QueryIdGenerator queryIdGenerator = new QueryIdGenerator();
 
-    QueryIdGenerator queryIdGenerator = new QueryIdGenerator();
+    private BlockingQueue<StationUpdate> pendingUpdateMatrix = new LinkedBlockingQueue<StationUpdate>();
+
+    private Semaphore pendingUpdateMatrixMutex = new Semaphore(0);
+
+
 //    public static void main(String[] args) {
 //
 //        System.out.println("Note that this must be executed using #storm jar xxx.jar xxx command.");
@@ -130,6 +132,25 @@ public class DRPCQueryResponser implements QueryService.Iface{
         else{
             System.out.format("Query [%d] is timeout!\n", queryId);
         }
+    }
+
+    @Override
+    public StationUpdate fetchStateUpdate() throws TException {
+        try {
+            pendingUpdateMatrixMutex.acquire();
+            return pendingUpdateMatrix.take();
+        }
+        catch (InterruptedException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
+    @Override
+    public void pushUpdate(StationUpdate update) throws TException {
+        pendingUpdateMatrix.add(update);
+        pendingUpdateMatrixMutex.release();
     }
 
     private class QueryIdGenerator {

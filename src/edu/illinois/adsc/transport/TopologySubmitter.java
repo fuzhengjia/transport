@@ -8,6 +8,7 @@ import backtype.storm.tuple.Fields;
 import edu.illinois.adsc.transport.topology.QueryDispatchSpout;
 import edu.illinois.adsc.transport.topology.QueryBolt;
 import edu.illinois.adsc.transport.topology.ResultBolt;
+import edu.illinois.adsc.transport.topology.UpdateDispatchSpout;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -53,9 +54,12 @@ public class TopologySubmitter {
 
         TopologyBuilder builder = new TopologyBuilder();
 
-        builder.setSpout("dispatch",new QueryDispatchSpout(thriftIp, port),2);
+        builder.setSpout("query_dispatch", new QueryDispatchSpout(thriftIp, port), 1);
 
-        builder.setBolt("query", new QueryBolt(), 8).fieldsGrouping("dispatch", "query_stream",new Fields("location"));
+        builder.setSpout("update_dispatch", new UpdateDispatchSpout(thriftIp, port),1);
+
+        builder.setBolt("query", new QueryBolt(), 8).fieldsGrouping("query_dispatch", "query_stream",new Fields("station"))
+                                                    .fieldsGrouping("update_dispatch","update_stream", new Fields("station"));
 
         builder.setBolt("result", new ResultBolt(thriftIp, port), 2).shuffleGrouping("query");
 

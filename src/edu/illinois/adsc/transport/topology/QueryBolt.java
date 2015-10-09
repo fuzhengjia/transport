@@ -7,11 +7,14 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import edu.illinois.adsc.transport.ErrorCode;
+import edu.illinois.adsc.transport.generated.Matrix;
 import edu.illinois.adsc.transport.generated.Query;
+import edu.illinois.adsc.transport.generated.StationUpdate;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import backtype.storm.tuple.Values;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,6 +33,8 @@ public class QueryBolt extends BaseRichBolt {
 
     private TDeserializer deserializer;
 
+    private Map<String, Matrix> stationID2Matrix = new HashMap<String, Matrix>();
+
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector boltOutputCollector) {
         outputCollector = boltOutputCollector;
@@ -43,7 +48,7 @@ public class QueryBolt extends BaseRichBolt {
             handleQuery(tuple);
         }
         else if (streamID.equals("update_stream")) {
-
+            handleUpdate(tuple);
         }
         else {
             System.err.println("Unknown stream source");
@@ -90,6 +95,21 @@ public class QueryBolt extends BaseRichBolt {
         }
         catch (TException e) {
             e.printStackTrace();
+        }
+    }
+
+    void handleUpdate(Tuple tuple) {
+        StationUpdate update = new StationUpdate();
+        try {
+            deserializer.deserialize(update,tuple.getBinary(1));
+        } catch (TException e) {
+            e.printStackTrace();
+        }
+        if(stationID2Matrix.containsKey(update.getStationId())) {
+            stationID2Matrix.put(update.getStationId(),update.getUpdateMatrix());
+        }
+        else {
+            stationID2Matrix.put(update.getStationId(),update.getUpdateMatrix());
         }
     }
 
