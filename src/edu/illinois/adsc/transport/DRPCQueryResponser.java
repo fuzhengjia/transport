@@ -144,7 +144,7 @@ public class DRPCQueryResponser implements QueryService.Iface{
         final String stationId = "34";
         final String time = "2015-4-10,14:33:23";
         final String ip = "192.168.0.235";
-        final int port = 20000; 
+        final int port = Config.thriftPort;
 
         TTransport transport = new TSocket(ip, port);
 
@@ -178,7 +178,7 @@ public class DRPCQueryResponser implements QueryService.Iface{
             DRPCQueryResponser queryResponseServer = new DRPCQueryResponser();
             QueryService.Processor processor = new QueryService.Processor(queryResponseServer);
 
-            TServerTransport serverTransport = new TServerSocket(20000);
+            TServerTransport serverTransport = new TServerSocket(Config.thriftPort);
             TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
 
             System.out.println("Starting the monitoring daemon...");

@@ -77,7 +77,7 @@ public class FakeQueryResponser implements QueryService.Iface {
             FakeQueryResponser queryResponseServer = new FakeQueryResponser();
             QueryService.Processor processor = new QueryService.Processor(queryResponseServer);
 
-            TServerTransport serverTransport = new TServerSocket(20000);
+            TServerTransport serverTransport = new TServerSocket(Config.thriftPort);
             TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
 
             System.out.println("Starting the monitoring daemon...");

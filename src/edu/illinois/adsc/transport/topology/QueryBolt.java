@@ -16,10 +16,15 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Created by robert on 10/6/15.
  */
 public class QueryBolt extends BaseRichBolt {
+
+    private static final Logger logger = LoggerFactory.getLogger(QueryBolt.class);
 
     private OutputCollector outputCollector;
 
@@ -33,32 +38,17 @@ public class QueryBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        long queryId = tuple.getLong(0);
-        Query query = new Query();
-        long result;
-        try{
-            deserializer.deserialize(query,tuple.getBinary(1));
-
-        Pattern p = Pattern.compile( ",([0-9]+):([0-9]+)" );
-        Matcher m = p.matcher(query.getTimeStamp());
-        if(!m.find()){
-            System.err.println("failed to parse the input");
-            System.err.format("name:%s, timeStamp:%s\n",query.getStationId(),query.getStationId());
-            result = ErrorCode.InvalidateInput;
+        String streamID = tuple.getSourceStreamId();
+        if(streamID.equals("query_stream")) {
+            handleQuery(tuple);
         }
-        else{
-            String hour = m.group(1);
-            String min = m.group(2);
-
-            result = predicate(Integer.parseInt(query.getStationId()),Integer.parseInt(hour), Integer.parseInt(min));
-        }
-
-        outputCollector.emit(new Values(query.query_id, result));
+        else if (streamID.equals("update_stream")) {
 
         }
-        catch (TException e) {
-            e.printStackTrace();
+        else {
+            System.err.println("Unknown stream source");
         }
+
     }
 
     @Override
@@ -72,6 +62,35 @@ public class QueryBolt extends BaseRichBolt {
         final long peakTime = 1800;
         return (long)((1-Math.abs(hour*min-peakTime)/(double)peakTime) * peak + base);
 
+    }
+
+    private void handleQuery(Tuple tuple) {
+        long queryId = tuple.getLong(0);
+        Query query = new Query();
+        long result;
+        try{
+            deserializer.deserialize(query,tuple.getBinary(1));
+
+            Pattern p = Pattern.compile( ",([0-9]+):([0-9]+)" );
+            Matcher m = p.matcher(query.getTimeStamp());
+            if(!m.find()){
+                System.err.println("failed to parse the input");
+                System.err.format("name:%s, timeStamp:%s\n",query.getStationId(),query.getStationId());
+                result = ErrorCode.InvalidateInput;
+            }
+            else{
+                String hour = m.group(1);
+                String min = m.group(2);
+
+                result = predicate(Integer.parseInt(query.getStationId()),Integer.parseInt(hour), Integer.parseInt(min));
+            }
+
+            outputCollector.emit(new Values(query.query_id, result));
+
+        }
+        catch (TException e) {
+            e.printStackTrace();
+        }
     }
 
 }
