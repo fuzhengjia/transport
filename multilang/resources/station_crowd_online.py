@@ -4,7 +4,6 @@ from keras.optimizers import RMSprop
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.recurrent import LSTM
-from data import load_csv_station_crowd
 import csv
 from datetime import datetime, date, time
 
@@ -29,11 +28,9 @@ class Station_Crowd_Pred(object):
 		self.seq_length = 10
 
 		station_id = _station_id
-		scaler_file_name = "/home/nfs/victor/metro-station-crowd/"+station_id+"/"+station_id+"_station_crowd_scaler.csv"
-		model_file_name = "/home/nfs/victor/metro-station-crowd/"+station_id+"/"+station_id+"_station_crowd_model.hdf5"
+		scaler_file_name = "/home/nfs/data/metro-station-crowd/"+station_id+"/"+station_id+"_station_crowd_scaler.csv"
+		model_file_name = "/home/nfs/data/metro-station-crowd/"+station_id+"/"+station_id+"_station_crowd_model.hdf5"
 
-		print 'Building model...'
-		print "input: ", n_in, "hidden: ", n_hidden, "out: ", n_out
 		self.model = Sequential()
 		self.model.add(LSTM(n_hidden, input_dim=n_in, activation='sigmoid', inner_activation='hard_sigmoid')) # try using a GRU instead, for fun
 		self.model.add(Dropout(0.5))
@@ -50,7 +47,7 @@ class Station_Crowd_Pred(object):
 		return weekday
 
 	def get_hour(self, time_str):
-		time = datetime.strptime(time_str, '%H:%M:%S').time()
+		time = datetime.strptime(time_str, '%H:%M').time()
 		hour = time.hour
 		minute = time.minute
 		time_dec = hour + (float)(minute/100.0)
@@ -67,14 +64,13 @@ class Station_Crowd_Pred(object):
 		return value
  
 	def preprocessing(self, input_X):
-		date_str = input_X[0]
-		time_str = input_X[1]
-		value_str = input_X[2]
+		[date_str,time_str] = input_X[0].split(",")
+		value_str = input_X[1]
 		weekday = self.get_weekday(date_str)
 		hour = self.get_hour(time_str)
 		value = float(value_str)
 		preprocessed_input_X = numpy.array([weekday, hour, value])
-		return preprocessed_input_X
+		return preprocessed_input_X, date_str, time_str, value_str
 
 	def normalizating_data(self, preprocessed_input_X):
 		norm_weekday = self.normalization(self.min_max_scaler,"date", preprocessed_input_X[0])
@@ -89,67 +85,22 @@ class Station_Crowd_Pred(object):
 		return norm_seq_test_data
 
 	def get_prediction(self, input_X):
-		date_str = input_X[0]
-		time_str = input_X[1]
 
-		preprocessed_input_X = self.preprocessing(input_X)
+		preprocessed_input_X, date_str, time_str, value_str = self.preprocessing(input_X)
 
 		norm_input_X = self.normalizating_data(preprocessed_input_X)
 		
 		self.norm_seq_test_data = self.cache_sequence(self.norm_seq_test_data, norm_input_X)
 		
-		print self.norm_seq_test_data
 
 		norm_pred_label = (self.model.predict(self.norm_seq_test_data))[0][0]
 
-		pred_label = self.inverse_normalization(self.min_max_scaler, "label", norm_pred_label)
-		result = [str(date_str)+","+str(time_str),int(pred_label)]
-		
+		pred_label = int(self.inverse_normalization(self.min_max_scaler, "label", norm_pred_label))
+		result = [[str(date_str)+","+str(time_str),long(pred_label)]]
+
+		# return str(pred_label)
+
 		return result
 	    # ld = load_csv_station_crowd.Load_Data()
 	    # norm_seq_train_data, norm_seq_test_data, norm_seq_train_label, norm_seq_test_label, test_dataset_date_list, test_dataset_time_list,  data_min_max_scaler, label_min_max_scaler = ld.load_dataset(train_file_name, test_file_name)
 
-
-station_id = "243"
-scp = Station_Crowd_Pred(station_id)
-
-x = ["2015-04-24","05:05:00",1]
-ret = scp.get_prediction(x)
-print ret
-
-x = ["2015-04-24","05:10:00",2]
-ret = scp.get_prediction(x)
-print ret
-
-
-x = ["2015-04-24","05:15:00",1]
-ret = scp.get_prediction(x)
-print ret
-
-x = ["2015-04-24","05:20:00",2]
-ret = scp.get_prediction(x)
-print ret
-
-x = ["2015-04-24","05:25:00",8]
-ret = scp.get_prediction(x)
-print ret
-
-x = ["2015-04-24","05:30:00",16]
-ret = scp.get_prediction(x)
-print ret
-
-x = ["2015-04-24","05:35:00",18]
-ret = scp.get_prediction(x)
-print ret
-
-x = ["2015-04-24","05:40:00",17]
-ret = scp.get_prediction(x)
-print ret
-
-x = ["2015-04-24","05:45:00",20]
-ret = scp.get_prediction(x)
-print ret
-
-x = ["2015-04-24","05:50:00",18]
-ret = scp.get_prediction(x)
-print ret

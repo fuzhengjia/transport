@@ -65,8 +65,8 @@ public class QueryBolt extends BaseRichBolt {
     }
 
     private long predicate(int bias, int hour, int min) {
-        final long base = 100 + bias;
-        final long peak = 1000;
+        final long base = 1000 + bias;
+        final long peak = 10000;
         final long peakTime = 1800;
         return (long)((1-Math.abs(hour*min-peakTime)/(double)peakTime) * peak + base);
 
@@ -105,7 +105,9 @@ public class QueryBolt extends BaseRichBolt {
     void handleUpdate(Tuple tuple) {
         String station = tuple.getString(0);
         String timeStamp = tuple.getString(1);
-        Long value = tuple.getDouble(2).longValue();
+        Long value = tuple.getLong(2);
+
+        System.out.format("handle update: %s, %s, %d\n\n", station, timeStamp, value);
 
         if(!stationID2Matrix.containsKey(station)) {
             stationID2Matrix.put(station, new TreeMap<Calendar, Long>());
@@ -127,7 +129,7 @@ public class QueryBolt extends BaseRichBolt {
     private long predicateBasedOnMatrix(Query query) {
         String stationId = query.getStationId();
         if(!stationID2Matrix.containsKey(stationId)){
-            System.out.println("stationID2Matrix does not contains the key"+stationId);
+            System.out.println("stationID2Matrix does not contains the key "+stationId);
             return -1;
         }
         SortedMap<Calendar, Long> map = stationID2Matrix.get(stationId);
@@ -150,7 +152,8 @@ public class QueryBolt extends BaseRichBolt {
             return -1;
         }
         Long value = map.get(tailmap.firstKey());
-        System.out.println("Predicate based on matrix:"+value);
+ 
+        System.out.println("Predicate based on matrix:" + value + "at timestamp:" + simpleDateFormat.format(tailmap.firstKey().getTime()));
         return value;
 
 

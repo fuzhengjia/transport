@@ -86,16 +86,18 @@ public class InputSimulatorFromSingleFile {
 
                     try {
                         client.pushUpdate(stationUpdate);
-                        Thread.sleep(10000);
+//                        Thread.sleep(10000);
                     } catch (TException e ) {
                         e.printStackTrace();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
+//                    catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
 
 
 
                     System.out.format("station:%s,time:%s,value:%s\n",station,time,value);
+
                 }
             }
 

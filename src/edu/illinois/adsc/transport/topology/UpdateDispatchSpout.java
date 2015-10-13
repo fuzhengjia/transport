@@ -56,7 +56,7 @@ public class UpdateDispatchSpout extends BaseRichSpout {
         try {
             StationUpdate update = thriftClient.fetchStateUpdate();
 //            outputCollector.emit("update_stream",new Values(update.getStationId(),serializer.serialize(update)));
-            outputCollector.emit("update_stream",new Values(update.getStationId(),update.getTimeStamp(),update.getUpdateMatrix().data.get(0)));
+            outputCollector.emit("update_stream",new Values(update.getStationId(),update.getTimeStamp(),update.getUpdateMatrix().data.get(0).longValue()));
         }
         catch (TException e) {
             e.printStackTrace();
