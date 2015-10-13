@@ -151,6 +151,7 @@ public class DRPCQueryResponser implements QueryService.Iface{
     public void pushUpdate(StationUpdate update) throws TException {
         pendingUpdateMatrix.add(update);
         pendingUpdateMatrixMutex.release();
+        System.out.format("new update to location [%s] at time [%s]",update.getStationId(),update.getTimeStamp());
     }
 
     private class QueryIdGenerator {
@@ -162,8 +163,16 @@ public class DRPCQueryResponser implements QueryService.Iface{
     }
 
     public static void main(String [] args) throws TException {
-        final String stationId = "34";
-        final String time = "2015-4-10,14:33:23";
+        String stationId = "";
+        String time = "";
+        if(args.length == 0){
+            stationId = "34";
+            time = "2015-4-10,14:33:23";
+        }
+        else{
+            stationId = args[0];
+            time = args[1];
+        }
         final String ip = "192.168.0.235";
         final int port = Config.thriftPort;
 

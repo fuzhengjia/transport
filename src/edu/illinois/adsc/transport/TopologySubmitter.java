@@ -5,10 +5,7 @@ import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
-import edu.illinois.adsc.transport.topology.QueryDispatchSpout;
-import edu.illinois.adsc.transport.topology.QueryBolt;
-import edu.illinois.adsc.transport.topology.ResultBolt;
-import edu.illinois.adsc.transport.topology.UpdateDispatchSpout;
+import edu.illinois.adsc.transport.topology.*;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -58,8 +55,10 @@ public class TopologySubmitter {
 
         builder.setSpout("update_dispatch", new UpdateDispatchSpout(thriftIp, port),1);
 
+        builder.setBolt("predict_bolt", new CrowdPredictBolt(),1).fieldsGrouping("update_dispatch","update_stream", new Fields("station"));
+
         builder.setBolt("query", new QueryBolt(), 8).fieldsGrouping("query_dispatch", "query_stream",new Fields("station"))
-                                                    .fieldsGrouping("update_dispatch","update_stream", new Fields("station"));
+                                                    .fieldsGrouping("predict_bolt","update_stream", new Fields("station"));
 
         builder.setBolt("result", new ResultBolt(thriftIp, port), 2).shuffleGrouping("query");
 
@@ -76,9 +75,11 @@ public class TopologySubmitter {
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("query", conf, builder.createTopology());
 
-            Thread.sleep(100000);
 
-            cluster.shutdown();
+            while(true)
+                Thread.sleep(100000);
+
+//            cluster.shutdown();
         }
         else {
             conf.setNumWorkers(4);

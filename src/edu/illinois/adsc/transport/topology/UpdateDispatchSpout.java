@@ -41,7 +41,7 @@ public class UpdateDispatchSpout extends BaseRichSpout {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream("update_stream",new Fields("station","update_matrix"));
+        outputFieldsDeclarer.declareStream("update_stream",new Fields("station","time","value"));
     }
 
     @Override
@@ -55,7 +55,8 @@ public class UpdateDispatchSpout extends BaseRichSpout {
     public void nextTuple() {
         try {
             StationUpdate update = thriftClient.fetchStateUpdate();
-            outputCollector.emit("update_stream",new Values(update.getStationId(),serializer.serialize(update)));
+//            outputCollector.emit("update_stream",new Values(update.getStationId(),serializer.serialize(update)));
+            outputCollector.emit("update_stream",new Values(update.getStationId(),update.getTimeStamp(),update.getUpdateMatrix().data.get(0)));
         }
         catch (TException e) {
             e.printStackTrace();

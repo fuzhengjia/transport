@@ -14,8 +14,9 @@ import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import backtype.storm.tuple.Values;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,12 +34,14 @@ public class QueryBolt extends BaseRichBolt {
 
     private TDeserializer deserializer;
 
-    private Map<String, Matrix> stationID2Matrix = new HashMap<String, Matrix>();
+    private Map<String, SortedMap<Calendar,Long>> stationID2Matrix = new HashMap<String, SortedMap<Calendar,Long>>();
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector boltOutputCollector) {
         outputCollector = boltOutputCollector;
         deserializer = new TDeserializer();
+
+//        generateMatrix();
     }
 
     @Override
@@ -86,8 +89,9 @@ public class QueryBolt extends BaseRichBolt {
             else{
                 String hour = m.group(1);
                 String min = m.group(2);
-
-                result = predicate(Integer.parseInt(query.getStationId()),Integer.parseInt(hour), Integer.parseInt(min));
+                result = predicateBasedOnMatrix(query);
+                if(result<0)
+                    result = predicate(Integer.parseInt(query.getStationId()),Integer.parseInt(hour), Integer.parseInt(min));
             }
 
             outputCollector.emit(new Values(query.query_id, result));
@@ -99,18 +103,84 @@ public class QueryBolt extends BaseRichBolt {
     }
 
     void handleUpdate(Tuple tuple) {
-        StationUpdate update = new StationUpdate();
-        try {
-            deserializer.deserialize(update,tuple.getBinary(1));
-        } catch (TException e) {
+        String station = tuple.getString(0);
+        String timeStamp = tuple.getString(1);
+        Long value = tuple.getDouble(2).longValue();
+
+        if(!stationID2Matrix.containsKey(station)) {
+            stationID2Matrix.put(station, new TreeMap<Calendar, Long>());
+        }
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd,HH:mm");
+        Calendar cal = Calendar.getInstance();
+        try{
+            cal.setTime(simpleDateFormat.parse(timeStamp));
+
+            stationID2Matrix.get(station).put(cal, value);
+            System.out.println("stationID2Matrix is updated: "+timeStamp+","+value);
+        } catch (ParseException e) {
             e.printStackTrace();
         }
-        if(stationID2Matrix.containsKey(update.getStationId())) {
-            stationID2Matrix.put(update.getStationId(),update.getUpdateMatrix());
+
+    }
+
+    private long predicateBasedOnMatrix(Query query) {
+        String stationId = query.getStationId();
+        if(!stationID2Matrix.containsKey(stationId)){
+            System.out.println("stationID2Matrix does not contains the key"+stationId);
+            return -1;
         }
-        else {
-            stationID2Matrix.put(update.getStationId(),update.getUpdateMatrix());
+        SortedMap<Calendar, Long> map = stationID2Matrix.get(stationId);
+
+        String time = query.getTimeStamp();
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd,HH:mm");
+        Calendar cal = Calendar.getInstance();
+        try {
+            cal.setTime(simpleDateFormat.parse(time));
+        } catch (ParseException e) {
+            e.printStackTrace();
+            System.out.println("time parse fails!");
+            return -1;
         }
+
+        SortedMap<Calendar, Long> tailmap = map.tailMap(cal);
+        if(tailmap.isEmpty()){
+            System.out.println("tails is empty");
+            return -1;
+        }
+        Long value = map.get(tailmap.firstKey());
+        System.out.println("Predicate based on matrix:"+value);
+        return value;
+
+
+    }
+
+    private void generateMatrix() {
+
+        TreeMap<Calendar, Long> map = new TreeMap<Calendar, Long>();
+
+        Matrix matrix = new Matrix();
+        matrix.rows = 1;
+        matrix.columns = 1;
+        matrix.data = new Vector<Double>();
+        matrix.data.add(1024.);
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd,HH:mm");
+        Calendar cal = Calendar.getInstance();
+        try{
+            cal.setTime(simpleDateFormat.parse("2015-4-24,14:00"));
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return;
+        }
+
+
+        map.put(cal,1024L);
+
+
+        stationID2Matrix.put("1", map);
+        System.out.println("generate matrix succeed!");
     }
 
 }

@@ -57,13 +57,11 @@ public class ThriftClientSimulator {
         ret.updateMatrix = new Matrix();
         ret.updateMatrix.rows = 2;
         ret.updateMatrix.columns = 2;
-        List<List<Double>> matrix = new Vector<List<Double>>();
-        matrix.add(new Vector<Double>());
-        matrix.add(new Vector<Double>());
-        matrix.get(0).add(0.);
-        matrix.get(0).add(1.0);
-        matrix.get(1).add(2.);
-        matrix.get(1).add(3.0);
+        List<Double> matrix = new Vector<Double>();
+        matrix.add(0.);
+        matrix.add(1.0);
+        matrix.add(2.);
+        matrix.add(3.0);
         ret.updateMatrix.data=matrix;
         return ret;
     }

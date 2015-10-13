@@ -1,6 +1,6 @@
 namespace java edu.illinois.adsc.transport.generated
 
-typedef list<double> Vector
+
 
 struct Query {
 1: i64 query_id;
@@ -16,12 +16,13 @@ struct QueryResult {
 struct Matrix {
 1: i64 rows,
 2: i64 columns,
-3: list<Vector> data
+3: list<double> data
 }
 
 struct StationUpdate {
 1: string stationId,
-2: Matrix updateMatrix
+2: string timeStamp,
+3: Matrix updateMatrix
 }
 
 service QueryService {

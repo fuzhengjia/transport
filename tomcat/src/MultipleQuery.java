@@ -1,3 +1,4 @@
+import edu.illinois.adsc.transport.Config;
 import edu.illinois.adsc.transport.generated.QueryService;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -107,7 +108,7 @@ public class MultipleQuery extends HttpServlet {
 
         final String serverIP = "192.168.0.235";
 
-        final int port = 20000;
+        final int port = Config.thriftPort;
 
         transport = new TSocket(serverIP, port);
         try{

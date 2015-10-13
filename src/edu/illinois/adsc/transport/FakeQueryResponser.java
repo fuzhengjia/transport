@@ -67,13 +67,11 @@ public class FakeQueryResponser implements QueryService.Iface {
         ret.updateMatrix = new Matrix();
         ret.updateMatrix.rows = 2;
         ret.updateMatrix.columns = 2;
-        List<List<Double>> matrix = new Vector<List<Double>>();
-        matrix.add(new Vector<Double>());
-        matrix.add(new Vector<Double>());
-        matrix.get(0).add(0.);
-        matrix.get(0).add(1.0);
-        matrix.get(1).add(2.);
-        matrix.get(1).add(3.0);
+        List<Double> matrix = new Vector<Double>();
+        matrix.add(0.);
+        matrix.add(1.0);
+        matrix.add(2.);
+        matrix.add(3.0);
         ret.updateMatrix.data=matrix;
         return ret;
     }
@@ -120,7 +118,7 @@ public class FakeQueryResponser implements QueryService.Iface {
             FakeQueryResponser queryResponseServer = new FakeQueryResponser();
             QueryService.Processor processor = new QueryService.Processor(queryResponseServer);
 
-            TServerTransport serverTransport = new TServerSocket(20000);
+            TServerTransport serverTransport = new TServerSocket(Config.thriftPort);
             TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
 
             System.out.println("Starting the monitoring daemon...");
