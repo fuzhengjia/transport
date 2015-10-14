@@ -54,6 +54,16 @@
         <servlet-name>multiplequery</servlet-name>
         <url-pattern>/multiplequery</url-pattern>
     </servlet-mapping>
+
+
+    <servlet>
+        <servlet-name> SystemTime</servlet-name>
+        <servlet-class> SystemTime</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name> SystemTime</servlet-name>
+        <url-pattern>/systemtime</url-pattern>
+    </servlet-mapping>
 	 
 	 
 </web-app>

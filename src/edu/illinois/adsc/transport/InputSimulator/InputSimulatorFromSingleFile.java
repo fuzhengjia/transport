@@ -10,6 +10,9 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 
 import java.io.*;
 import java.util.Vector;
@@ -21,14 +24,25 @@ import java.util.regex.Pattern;
  */
 public class InputSimulatorFromSingleFile {
 
+    @Option(name = "--help", aliases = {"-h"}, usage = "help")
+    private boolean _help;
 
+    @Option(name = "--force-update", aliases = "-f", usage = "force update regardless of the system time in the coordinator.")
+    private boolean _force;
 
+    @Option(name = "--file", aliases = "-i", usage = "the input file.")
+    private String _filename;
 
     String fileName;
 
     TTransport transport;
     TProtocol protocol;
     QueryService.Client client;
+
+
+    public InputSimulatorFromSingleFile() {
+
+    }
 
     public InputSimulatorFromSingleFile(String file) {
         fileName = file;
@@ -56,7 +70,7 @@ public class InputSimulatorFromSingleFile {
 
     void simulateUpdate() {
         try{
-            FileInputStream fileInputStream = new FileInputStream(fileName);
+            FileInputStream fileInputStream = new FileInputStream(_filename);
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileInputStream));
 
             //skip the header
@@ -85,7 +99,10 @@ public class InputSimulatorFromSingleFile {
                     stationUpdate.updateMatrix = matrix;
 
                     try {
-                        client.pushUpdate(stationUpdate);
+                        if (_force)
+                            client.pushUpdateForce(stationUpdate);
+                        else
+                            client.pushUpdate(stationUpdate);
 //                        Thread.sleep(10000);
                     } catch (TException e ) {
                         e.printStackTrace();
@@ -95,7 +112,8 @@ public class InputSimulatorFromSingleFile {
 //                    }
 
 
-
+                    if(_force)
+                        System.out.print("force update ");
                     System.out.format("station:%s,time:%s,value:%s\n",station,time,value);
 
                 }
@@ -121,6 +139,24 @@ public class InputSimulatorFromSingleFile {
         }
 
         InputSimulatorFromSingleFile inputSimulatorFromSingleFile = new InputSimulatorFromSingleFile(args[0]);
+
+        CmdLineParser parser = new CmdLineParser(inputSimulatorFromSingleFile);
+
+        parser.setUsageWidth(80);
+
+        try {
+            parser.parseArgument(args);
+        } catch (CmdLineException e) {
+            System.err.println(e.getMessage());
+            inputSimulatorFromSingleFile._help = true;
+        }
+
+        if (inputSimulatorFromSingleFile._help) {
+            parser.printUsage(System.err);
+            System.err.println();
+            return;
+        }
+
 
         inputSimulatorFromSingleFile.connectToThriftServer();
 

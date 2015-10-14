@@ -30,5 +30,8 @@ service QueryService {
     Query takeQuery(),
     void finishQuery(1: QueryResult result),
     StationUpdate fetchStateUpdate(),
-    void pushUpdate(1: StationUpdate update)
+    void pushUpdate(1: StationUpdate update),
+    void pushUpdateForce(1: StationUpdate update),
+    string getCurrentTime(),
+    bool setTimeStamp(1: string time)
 }

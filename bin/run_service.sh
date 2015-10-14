@@ -1,2 +1,2 @@
 #!/bin/sh
-java -cp ../out/artifacts/transport_jar/transport.jar edu.illinois.adsc.transport.StartDaemon $*
+java -cp ../out/artifacts/transport_jar/transport.jar edu.illinois.adsc.transport.coordinator.StartDaemon $*

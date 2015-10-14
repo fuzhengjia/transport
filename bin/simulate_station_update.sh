@@ -1,2 +1,2 @@
 #!/bin/sh
-java -cp ../out/artifacts/transport_jar/transport.jar edu.illinois.adsc.transport.ThriftClientSimulator
+java -cp ../out/artifacts/transport_jar/transport.jar edu.illinois.adsc.transport.ThriftClientSimulator $*
