@@ -18,7 +18,7 @@ public class CrowdPredictBolt extends ShellBolt implements IRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream("update_stream",new Fields("station","time","crowd"));
+        outputFieldsDeclarer.declareStream("update_stream",new Fields("station","query_type","time","value","value2"));
     }
 
     @Override

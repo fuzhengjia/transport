@@ -1,4 +1,5 @@
 import edu.illinois.adsc.transport.Config;
+import edu.illinois.adsc.transport.common.QueryType;
 import edu.illinois.adsc.transport.generated.QueryService;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -16,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Time;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,15 +37,17 @@ public class MultipleQuery extends HttpServlet {
                       HttpServletResponse response)
             throws IOException, ServletException
     {
+        response.addHeader("Access-Control-Allow-Origin","*");
         out = response.getWriter();
 
         String stationName = request.getParameter("station");
         String time = request.getParameter("time");
         String delta = request.getParameter("delta");
+        String type = request.getParameter("type");
 
-        if(stationName==null || time ==null || delta == null){
+        if(stationName==null || time ==null || delta == null || type == null){
             out.println("Illegal URL format.");
-            out.print("it should be http://xxx/transport/multiplequery?station=22&time=2015-4-10,13:00&delta=3,18,31");
+            out.print("it should be http://xxx/transport/multiplequery?type=1&station=22&time=2015-4-10,13:00&delta=3,18,31");
             return;
         }
 
@@ -79,6 +83,12 @@ public class MultipleQuery extends HttpServlet {
         String[] deltas = deltasSection.split(",");
 
 
+        long query_type = Long.parseLong(type);
+
+        if(!QueryType.validQueryTyep(query_type)) {
+            out.print("illegal query type:"+query_type);
+            return;
+        }
 
         for(String point: deltas) {
             int d = Integer.parseInt(point);
@@ -89,8 +99,12 @@ public class MultipleQuery extends HttpServlet {
             }
             try{
                 String tmpTime = date+","+hour+":"+min;
-                long result = client.getNumberOfPeople(stationName,tmpTime);
-                jsonObject.put(Integer.toString(d), result);
+                List<Long> result = client.query(stationName,tmpTime,query_type);
+
+                convertResultToJson(jsonObject,query_type,result,d);
+//                for(Long l: result) {
+//                    jsonObject.put(Integer.toString(d), l);
+//                }
             }
             catch (TException e) {
                 transport.close();
@@ -106,7 +120,7 @@ public class MultipleQuery extends HttpServlet {
     }
     boolean connectToThriftServer() {
 
-        final String serverIP = "192.168.0.235";
+        final String serverIP = Config.thriftIp;
 
         final int port = Config.thriftPort;
 
@@ -125,4 +139,19 @@ public class MultipleQuery extends HttpServlet {
             return false;
         }
     }
+
+    private void convertResultToJson(JSONObject jsonObject, long type, List<Long> values, int duration) throws JSONException{
+        switch((int)type){
+            case (int)QueryType.StationCrowd:
+                jsonObject.put(Integer.toString(duration), "" + values.get(0));
+                break;
+            case (int)QueryType.StationWaiting:
+                jsonObject.put(Integer.toString(duration), "" + values.get(0)+","+values.get(1));
+                break;
+            case (int)QueryType.TrainCrowd:
+                jsonObject.put(Integer.toString(duration), "" + values.get(0)+","+values.get(1));
+                break;
+        }
+    }
+
 }

@@ -1,6 +1,7 @@
 package edu.illinois.adsc.transport.InputSimulator;
 
 import edu.illinois.adsc.transport.Config;
+import edu.illinois.adsc.transport.common.QueryType;
 import edu.illinois.adsc.transport.generated.Matrix;
 import edu.illinois.adsc.transport.generated.QueryService;
 import edu.illinois.adsc.transport.generated.StationUpdate;
@@ -31,9 +32,10 @@ public class InputSimulatorFromSingleFile {
     private boolean _force;
 
     @Option(name = "--file", aliases = "-i", usage = "the input file.")
-    private String _filename;
+    private String fileName;
 
-    String fileName;
+    @Option(name = "--type", aliases = "-t", usage = "0: StationCrowd ; 1: StationWaiting; 2: TrainCrowd")
+    private Long queryType = 0L;
 
     TTransport transport;
     TProtocol protocol;
@@ -70,7 +72,7 @@ public class InputSimulatorFromSingleFile {
 
     void simulateUpdate() {
         try{
-            FileInputStream fileInputStream = new FileInputStream(_filename);
+            FileInputStream fileInputStream = new FileInputStream(fileName);
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileInputStream));
 
             //skip the header
@@ -89,6 +91,7 @@ public class InputSimulatorFromSingleFile {
                     StationUpdate stationUpdate = new StationUpdate();
                     stationUpdate.stationId =  station;
                     stationUpdate.timeStamp = time;
+                    stationUpdate.queryType = queryType;
 
                     Matrix matrix = new Matrix();
                     matrix.rows = 1;
@@ -106,6 +109,18 @@ public class InputSimulatorFromSingleFile {
 //                        Thread.sleep(10000);
                     } catch (TException e ) {
                         e.printStackTrace();
+                        try {
+                            Thread.sleep(1000);
+                            if(connectToThriftServer()) {
+                                System.out.println("Successfully connected to the thrift server!");
+                            }
+                            else {
+                                System.err.println("Failed to connect to the thrift server!");
+                            }
+
+                        } catch (InterruptedException ee) {
+
+                        }
                     }
 //                    catch (InterruptedException e) {
 //                        e.printStackTrace();
@@ -133,12 +148,16 @@ public class InputSimulatorFromSingleFile {
     }
 
     public static void main(String[] args) {
-        if(args.length==0) {
-            System.err.println("Input file is not specified!");
-            return;
-        }
+//        if(args.length==0) {
+//            System.err.println("Input file is not specified!");
+//            return;
+//        }
+//
+//        if(args.length==1) {
+//            System.out.println("Update type is not specified. Using default value: 1");
+//        }
 
-        InputSimulatorFromSingleFile inputSimulatorFromSingleFile = new InputSimulatorFromSingleFile(args[0]);
+        InputSimulatorFromSingleFile inputSimulatorFromSingleFile = new InputSimulatorFromSingleFile();
 
         CmdLineParser parser = new CmdLineParser(inputSimulatorFromSingleFile);
 

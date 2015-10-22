@@ -3,14 +3,17 @@ namespace java edu.illinois.adsc.transport.generated
 
 
 struct Query {
-1: i64 query_id;
-2: string stationId,
-3: string timeStamp
+1: i64 query_id,
+2: i64 query_type,
+3: string stationId,
+4: string timeStamp
 }
 
 struct QueryResult {
 1: i64 query_id,
-2: i64 result
+2: i64 query_type,
+3: i64 result,
+4: i64 result2
 }
 
 struct Matrix {
@@ -22,11 +25,12 @@ struct Matrix {
 struct StationUpdate {
 1: string stationId,
 2: string timeStamp,
-3: Matrix updateMatrix
+3: Matrix updateMatrix,
+4: i64 queryType
 }
 
 service QueryService {
-    i64 getNumberOfPeople(1:string stationID, 2:string timeStamp),
+    list<i64> query(1:string stationID, 2:string timeStamp, 3: i64 queryType),
     Query takeQuery(),
     void finishQuery(1: QueryResult result),
     StationUpdate fetchStateUpdate(),

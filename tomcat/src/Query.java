@@ -2,6 +2,7 @@
 
 
 import edu.illinois.adsc.transport.Config;
+import edu.illinois.adsc.transport.common.QueryType;
 import edu.illinois.adsc.transport.generated.QueryService;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -14,6 +15,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -40,24 +42,34 @@ public class Query extends HttpServlet {
                       HttpServletResponse response)
             throws IOException, ServletException
     {
+        response.addHeader("Access-Control-Allow-Origin","*");
+
         PrintWriter out = response.getWriter();
 
         String stationName = request.getParameter("station");
         String time = request.getParameter("time");
+        String type = request.getParameter("type");
 
-        if(stationName==null && time ==null){
+        if(stationName==null || time ==null || type ==null){
             out.println("Illegal URL format.");
-            out.print("it should be http://xxx/transport/query?Station=arg1&time=2015-4-10,13:00");
+            out.print("it should be http://xxx/transport/query?type=1&Station=arg1&time=2015-4-10,13:00");
             return;
         }
 
         JSONObject jsonObject = new JSONObject();
 
-        final String serverIP = "192.168.0.235";
+        final String serverIP = Config.thriftIp;
 
         final int port = Config.thriftPort;
 
         TTransport transport = new TSocket(serverIP, port);
+
+        long query_type = Long.parseLong(type);
+        if(!QueryType.validQueryTyep(query_type)) {
+            out.format("Illegal query type: %d",query_type);
+            return;
+        }
+
         try{
             transport.open();
 
@@ -65,9 +77,11 @@ public class Query extends HttpServlet {
 
             QueryService.Client client = new QueryService.Client(protocol);
 
-            double result = client.getNumberOfPeople(stationName,time);
+            List<Long> result = client.query(stationName,time,query_type);
 
-            jsonObject.put("value",result);
+//            jsonObject.put("value",result);
+            convertResultToJson(jsonObject,query_type,result);
+
             out.print(jsonObject.toString());
 
         }
@@ -82,5 +96,18 @@ public class Query extends HttpServlet {
             e.printStackTrace(out);
         }
 
+    }
+    private void convertResultToJson(JSONObject jsonObject, long type, List<Long> values) throws JSONException{
+        switch((int)type){
+            case (int)QueryType.StationCrowd:
+                jsonObject.put("values", "" + values.get(0));
+                break;
+            case (int)QueryType.StationWaiting:
+                jsonObject.put("values", "" + values.get(0)+","+values.get(1));
+                break;
+            case (int)QueryType.TrainCrowd:
+                jsonObject.put("values", "" + values.get(0)+","+values.get(1));
+                break;
+        }
     }
 }

@@ -30,14 +30,16 @@ public class FakeQueryResponser implements QueryService.Iface {
     }
 
     @Override
-    public long getNumberOfPeople(String stationID, String timeStamp) throws TException {
+    public List<Long> query(String stationID, String timeStamp, long type) throws TException {
 
         Pattern p = Pattern.compile( ",([0-9]+):([0-9]+)" );
         Matcher m = p.matcher(timeStamp);
+        List<Long> ret = new Vector<Long>();
         if(!m.find()){
             System.out.println("failed to parse the input");
             System.out.format("name:%s, timeStamp:%s\n",stationID,timeStamp);
-            return -2;
+            ret.add(-2L);
+            return ret;
         }
         String hour = m.group(1);
         String min = m.group(2);
@@ -97,11 +99,13 @@ public class FakeQueryResponser implements QueryService.Iface {
         return false;
     }
 
-    private long predicate(int bias, int hour, int min) {
+    private List<Long> predicate(int bias, int hour, int min) {
         final long base = 100 + bias;
         final long peak = 1000;
         final long peakTime = 1800;
-        return (long)((1-Math.abs(hour*min-peakTime)/(double)peakTime) * peak + base);
+        List<Long> ret = new Vector<Long>();
+        ret.add((long)((1-Math.abs(hour*min-peakTime)/(double)peakTime) * peak + base));
+        return ret;
 
     }
 

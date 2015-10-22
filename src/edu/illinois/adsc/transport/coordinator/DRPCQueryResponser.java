@@ -2,6 +2,7 @@ package edu.illinois.adsc.transport.coordinator;
 
 import edu.illinois.adsc.transport.Config;
 import edu.illinois.adsc.transport.ErrorCode;
+import edu.illinois.adsc.transport.common.QueryType;
 import edu.illinois.adsc.transport.generated.*;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -15,9 +16,7 @@ import org.apache.thrift.transport.TTransport;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -78,29 +77,35 @@ public class DRPCQueryResponser implements QueryService.Iface{
 //    }
 
     @Override
-    public long getNumberOfPeople(String stationID, String timeStamp) throws TException {
+    public List<Long> query(String stationID, String timeStamp, long queryType) throws TException {
         Long queryId = queryIdGenerator.generateId();
-        long ret;
         System.out.println("User submitted a query!");
-
+        List<Long> ret = new Vector<Long>();
         try {
-            pendingQueries.put(new Query(queryId, stationID, timeStamp));
+            pendingQueries.put(new Query(queryId, queryType,stationID, timeStamp));
             queryResults.put(queryId, new Result());
             System.out.println("Waiting fot the query result!");
             if(queryResults.get(queryId).sema.tryAcquire(2, TimeUnit.SECONDS)) {
-                ret = queryResults.get(queryId).queryResult.result;
+                ret.add(queryResults.get(queryId).queryResult.result);
+                ret.add(queryResults.get(queryId).queryResult.result2);
+
+//                ret = queryResults.get(queryId).queryResult.result;
                 queryResults.remove(queryId);
                 return ret;
             }
             else {
                 queryResults.remove(queryId);
                 System.out.println("Timeout!");
-                return ErrorCode.Timeout;
+                ret.add(ErrorCode.Timeout);
+                ret.add(ErrorCode.Timeout);
+                return ret;
             }
         }
         catch (InterruptedException e) {
             e.printStackTrace();
-            return ErrorCode.Interrupted;
+            ret.add(ErrorCode.Interrupted);
+            ret.add(ErrorCode.Timeout);
+            return ret;
         }
     }
 
@@ -123,7 +128,7 @@ public class DRPCQueryResponser implements QueryService.Iface{
         }
         catch (InterruptedException e) {
             e.printStackTrace();
-            return new Query(-1,"","");
+            return new Query(-1,-1,"","");
         }
     }
 
@@ -231,7 +236,7 @@ public class DRPCQueryResponser implements QueryService.Iface{
             stationId = args[0];
             time = args[1];
         }
-        final String ip = "192.168.0.235";
+        final String ip = Config.thriftIp;
         final int port = Config.thriftPort;
 
         TTransport transport = new TSocket(ip, port);
@@ -245,10 +250,10 @@ public class DRPCQueryResponser implements QueryService.Iface{
 
             long startTime = System.currentTimeMillis();
 
-            long result = client.getNumberOfPeople(stationId, time);
+            List<Long> result = client.query(stationId, time, 0L);
 
 
-            System.out.format("Station[%s]:\t %s\n", stationId, result);
+            System.out.format("Station[%s]:\t %s\n", stationId, result.get(0));
             System.out.format("Delay: %5.5fms\n", (System.currentTimeMillis()-startTime)/(double)1000);
         }
         catch (TException e) {

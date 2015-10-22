@@ -18,6 +18,8 @@ public class SystemTime extends HttpServlet {
                       HttpServletResponse response)
             throws IOException, ServletException
     {
+        response.addHeader("Access-Control-Allow-Origin","*");
+
         PrintWriter out = response.getWriter();
 
         CoordinatorClient coordinatorClient = new CoordinatorClient();

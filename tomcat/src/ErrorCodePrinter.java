@@ -16,6 +16,8 @@ public class ErrorCodePrinter extends HttpServlet {
                       HttpServletResponse response)
             throws IOException, ServletException
     {
+        response.addHeader("Access-Control-Allow-Origin","*");
+
         PrintWriter out = response.getWriter();
         out.println("Error code:");
         for(Long key: ErrorCode.errorCodeReason.keySet()) {

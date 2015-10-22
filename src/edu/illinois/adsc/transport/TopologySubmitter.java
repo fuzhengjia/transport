@@ -46,7 +46,7 @@ public class TopologySubmitter {
 
 
 
-        final String thriftIp = "192.168.0.235";
+        final String thriftIp = edu.illinois.adsc.transport.Config.thriftIp;
         final int port = edu.illinois.adsc.transport.Config.thriftPort;
 
         TopologyBuilder builder = new TopologyBuilder();

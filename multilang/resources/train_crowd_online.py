@@ -15,7 +15,7 @@ import os, sys
 
 
 
-class Station_Crowd_Pred(object):
+class Station_flow_Waiting_Pred(object):
     def read_scaler(self, scaler_file_name):
         min_max_scaler = {}
         csvfile = open(scaler_file_name,"rb")
@@ -30,13 +30,13 @@ class Station_Crowd_Pred(object):
     def __init__(self, _station_id):
         n_in = 3
         n_hidden_1 =  n_in + 15
-        n_out = 1
+        n_out = 2
 
         self.seq_length = 10
 
         station_id = _station_id
-        scaler_file_name = "/home/nfs/data/metro-station-crowd/"+station_id+"/"+station_id+"_station_crowd_scaler.csv"
-        model_file_name = "/home/nfs/data/metro-station-crowd/"+station_id+"/"+station_id+"_station_crowd_model.hdf5"
+        scaler_file_name = "/home/nfs/data/metro-train-crowd/"+station_id+"/"+station_id+"_train_crowd_scaler.csv"
+        model_file_name = "/home/nfs/data/metro-train-crowd/"+station_id+"/"+station_id+"_train_crowd_model.hdf5"
 
         self.model = Sequential()
         self.model.add(LSTM(output_dim = n_hidden_1,  input_dim=n_in, init='glorot_uniform', inner_init='orthogonal', activation='tanh'))
@@ -47,8 +47,6 @@ class Station_Crowd_Pred(object):
 
         self.min_max_scaler = self.read_scaler(scaler_file_name)
         self.norm_seq_test_data = numpy.zeros((1, 10, 3), dtype=numpy.float64)
-
-
 
 
     def get_weekday(self, date_str):
@@ -85,16 +83,20 @@ class Station_Crowd_Pred(object):
     def normalizating_data(self, preprocessed_input_X):
         norm_weekday = self.normalization(self.min_max_scaler,"date", preprocessed_input_X[0])
         norm_time = self.normalization(self.min_max_scaler,"time", preprocessed_input_X[1])
-        norm_value = self.normalization(self.min_max_scaler,"value_passenger_in_station", preprocessed_input_X[2])
+        norm_value = self.normalization(self.min_max_scaler,"value_passenger_flow_in", preprocessed_input_X[2])
         norm_input_X = numpy.array([norm_weekday, norm_time, norm_value])
         return norm_input_X
 
-
+    def inverse_normalizating_data(self, norm_result):
+        value_station_waiting_up = self.inverse_normalization(self.min_max_scaler,"label_train_crowd_up", norm_result[0])
+        value_station_waiting_down = self.inverse_normalization(self.min_max_scaler,"label_train_crowd_down", norm_result[1])
+        result = numpy.array([value_station_waiting_up, value_station_waiting_down])
+        return result
 
     def cache_sequence(self, norm_seq_test_data, norm_input_X):
         norm_seq_test_data = numpy.delete(norm_seq_test_data, 9,  axis=1)
         norm_seq_test_data = numpy.insert(norm_seq_test_data,0, norm_input_X, axis=1)
-        ###print norm_seq_test_data
+        ##print norm_seq_test_data
         return norm_seq_test_data
 
 
@@ -109,8 +111,8 @@ class Station_Crowd_Pred(object):
     def add_random(self,input_X):
         date_time_str = input_X[0]
         value = int(input_X[1])
-        rand_value = numpy.random.randint(low=-30, high=30, size=1)
-        ###print "rand_value", rand_value
+        rand_value = numpy.random.randint(low=-50, high=50, size=1)
+        ##print "rand_value", rand_value
         if value + rand_value < 1:
             value = value - rand_value
         else:
@@ -132,18 +134,18 @@ class Station_Crowd_Pred(object):
 
         ##print norm_seq_test_data
 
-        norm_pred_label = (self.model.predict(norm_seq_test_data))[0][0]
+        norm_pred_label = (self.model.predict(norm_seq_test_data))[0]
 
         ##print norm_pred_label
 
-        pred_label = int(self.inverse_normalization(self.min_max_scaler, "label_passenger_in_station", norm_pred_label)) + 1
-
+        pred_label = self.inverse_normalizating_data(norm_pred_label)
+        pred_label = pred_label.astype("int")
         ##print pred_label
 
 
         next_date_time_str = self.increase_timestep(date_time_str)
 
-        step_result = [next_date_time_str,abs(pred_label)+1,long(-1)]
+        step_result = [next_date_time_str,abs(pred_label[0])+1, abs(pred_label[1])+1]
 
         return step_result, norm_seq_test_data
 
@@ -154,20 +156,22 @@ class Station_Crowd_Pred(object):
         result = []
         norm_seq_test_data_future = numpy.zeros((1, 10, 3), dtype=numpy.float64)
 
-        ###print "first step"
-        ###print "input", input_X
+        ##print "first step"
+        ##print "input", input_X
         step_result, self.norm_seq_test_data = self.one_step_prediction(input_X, self.norm_seq_test_data)
-        ###print "output", step_result
+        ##print "output", step_result
         result.append(step_result)
         
         norm_seq_test_data_future = copy.copy(self.norm_seq_test_data)
 
         for i in xrange(15):
-            ###print "future step", i
-            step_result = self.add_random(step_result)
-            ###print "input", step_result
-            step_result, norm_seq_test_data_future = self.one_step_prediction(step_result, norm_seq_test_data_future)
-            ###print "output", step_result
+            ##print "future step", i
+            fake_input_X = copy.copy(input_X)
+            fake_input_X[0] = step_result[0]
+            fake_input_X = self.add_random(fake_input_X)
+            ##print "input", step_result
+            step_result, norm_seq_test_data_future = self.one_step_prediction(fake_input_X, norm_seq_test_data_future)
+            ##print "output", step_result
             result.append(step_result)
         
             
@@ -190,11 +194,11 @@ class Station_Crowd_Pred(object):
 
 # station_id = str(sys.argv[1])
 
-# path = "/home/victorliang/Research/SODA_2015/model_data/metro_station_crowd_model/"+station_id+"/"
-# test_file_name = path +"online/"+station_id+"_station_crowd_test.csv"
+# path = "/home/victorliang/Research/SODA_2015/model_data/metro_station_flow_model/"+station_id+"/"
+# test_file_name = path +"online/"+station_id+"_station_flow_test.csv"
 # dataset = load_file(test_file_name)
 
-# sdp = Station_Crowd_Pred(station_id)
+# sdp = Station_flow_Waiting_Pred(station_id)
 
 # for i in xrange(len(dataset)):
 #     date_str = dataset[i,0]

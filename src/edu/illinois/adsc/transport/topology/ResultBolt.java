@@ -5,6 +5,7 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
+import edu.illinois.adsc.transport.common.QueryType;
 import edu.illinois.adsc.transport.generated.QueryResult;
 import edu.illinois.adsc.transport.generated.QueryService;
 import org.apache.thrift.TException;
@@ -44,8 +45,10 @@ public class ResultBolt extends BaseRichBolt {
     @Override
     public void execute(Tuple tuple) {
         long queryId = tuple.getLong(0);
-        long result = tuple.getLong(1);
-        QueryResult queryResult = new QueryResult(queryId, result);
+        long type = tuple.getLong(1);
+        long result = tuple.getLong(2);
+        long result2 = tuple.getLong(3);
+        QueryResult queryResult = new QueryResult(queryId, type, result,result2);
         try{
             thriftClient.finishQuery(queryResult);
         }
