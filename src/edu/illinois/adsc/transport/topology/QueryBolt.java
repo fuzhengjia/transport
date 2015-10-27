@@ -42,6 +42,8 @@ public class QueryBolt extends BaseRichBolt {
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector boltOutputCollector) {
         outputCollector = boltOutputCollector;
         deserializer = new TDeserializer();
+        logger.info("QueryBolt is initialized!");
+
 
 //        generateMatrix();
     }

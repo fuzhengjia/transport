@@ -51,7 +51,7 @@ public class InputSimulatorFromSingleFile {
     }
 
     boolean connectToThriftServer() {
-        transport = new TSocket("localhost", Config.thriftPort);
+        transport = new TSocket(Config.thriftIp, Config.thriftPort);
 
 
         try{

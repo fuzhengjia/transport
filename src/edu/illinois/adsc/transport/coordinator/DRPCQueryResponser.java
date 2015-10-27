@@ -116,14 +116,13 @@ public class DRPCQueryResponser implements QueryService.Iface{
      * @return the query
      * @throws TException
      */
-
     @Override
     public Query takeQuery() throws TException {
         System.out.println("topology tried to fetch a query!");
         try {
         Query query = pendingQueries.take();
         System.out.println("a query is return to the topology!");
-        System.out.format("%d pending queries", pendingQueries.size());
+        System.out.format("%d pending queries\n", pendingQueries.size());
         return query;
         }
         catch (InterruptedException e) {

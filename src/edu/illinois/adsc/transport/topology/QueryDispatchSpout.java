@@ -58,7 +58,9 @@ public class QueryDispatchSpout extends BaseRichSpout {
     @Override
     public void nextTuple() {
         try {
+            logger.info("Topology will call server.takeQuery()!");
             Query query = thriftClient.takeQuery();
+            logger.info("server.takeQuery() returns!");
             if(query.getQuery_id()>=0) {
                 outputCollector.emit("query_stream",new Values(query.query_id, serializer.serialize(query), query.stationId));
             }
@@ -68,7 +70,8 @@ public class QueryDispatchSpout extends BaseRichSpout {
             }
         }
         catch (TException e) {
-            e.printStackTrace();
+            logger.info("TException happened!");
+//            e.printStackTrace();
             reconnectIfNecessary(1000);
         }
         catch (InterruptedException e) {
@@ -108,9 +111,9 @@ public class QueryDispatchSpout extends BaseRichSpout {
 
 //        if(thriftClient == null || transport == null || !transport.isOpen()) {
             if (connectToThriftServer())
-                System.out.println("ThriftServer is reconnected!");
+                logger.info("ThriftServer is reconnected!");
             else
-                System.out.println("Failed to reconnect to the ThriftServer!");
+                logger.info("Failed to reconnect to the ThriftServer!");
 //        }
     }
 }

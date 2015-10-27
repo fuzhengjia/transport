@@ -20,6 +20,7 @@ class CrowdPredicateBoltPython(storm.BasicBolt):
         self.model_creation_mapping_table = {0: create_model_for_station_crowd_online,
                                     1: create_mode_for_station_waiting_online,
                                     2: create_mode_for_train_crowd_online}
+        #storm.logInfo("CrowdPredicateBoltPython is initialized!");
         # self.dictionary["0243"]=station_crowd_online.Station_Crowd_Pred("0243")
         # self.model = station_crowd_online.Station_Crowd_Pred("0243")
         # storm.logInfo("model initialized!")
@@ -43,8 +44,10 @@ class CrowdPredicateBoltPython(storm.BasicBolt):
     def init_model_when_necessary(self, station, query_type):
         if not self.dictionary.has_key(station):
             self.dictionary[station] = {}
+            storm.logInfo("station["+station+"] is initialized!")
         if not self.dictionary[station].has_key(query_type):
             self.dictionary[station][query_type] = self.model_creation_mapping_table[query_type](station)
+            storm.logInfo("station["+station+","+ str(query_type)+"] is initialized!")
 
         # TODO: this function should return if there is any error in the model initialization.
 
