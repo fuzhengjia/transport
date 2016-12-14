@@ -5,5 +5,6 @@ package edu.illinois.adsc.transport;
  */
 public class Config {
     public static int thriftPort = 20001;
-    public static String thriftIp = "192.168.0.183";
+    //public static String thriftIp = "192.168.0.183";
+    public static String thriftIp = "192.168.0.31";
 }
